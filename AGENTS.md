@@ -212,6 +212,35 @@ As an AI-powered agent, Bastet continuously evolves through her integrated works
 - **Target Intelligence**: Accumulates insights about specific targets and their defensive patterns
 - **Cross-Session Learning**: Leverages historical logs to inform current analysis
 
+### Operational Playbooks and Lessons
+
+#### HackerOne Payout Aggregation (API-first)
+- Use the HackerOne Hacker API v1 `GET /v1/hackers/hacktivity` with Lucene-style filters to aggregate award data.
+- Preferred filter for August 2025 results: `latest_disclosable_action:Activities::BountyAwarded latest_disclosable_activity_at:[YYYY-MM-01 TO YYYY-(MM+1)-01) total_awarded_amount:>0`.
+- Send both `querystring` and `filter[query]` params; include relationships: `include=program,award` and `fields[program]=name,handle`.
+- Resolve award fields defensively: check `total_awarded_amount`, `total_awarded_amount_in_usd`, `awarded_amount`, `bounty_amount`, and fall back to included `award.attributes.amount_in_usd`.
+- Handle pagination via `links.next` (full URL); support cursor extraction when needed.
+- If filtered requests return nothing, fall back to unfiltered paging and perform local month and amount filtering.
+- Save raw items to `logs/tool_outputs/` and aggregated CSVs to `logs/findings/`; print top programs for fast review.
+
+#### Program Policy/Scope Snapshot (Playwright)
+- Some policy/scope details are not exposed via the Hacker API; fetch from program pages with Playwright.
+- Run in non-headless mode during debugging with slow-mo; add explicit waits, retries, and a minimum content-length check before accepting content.
+- Selectors that worked reliably: sections containing `h2` with text “Scope”, “Program Rules”, or “Policy”; fall back to `main` as a last resort.
+- Scroll to trigger hydration; wait between retries; keep the longest non-empty text if minimum threshold not met initially.
+- Always add the Program Policy URL to `scope.md` and date-stamp the snapshot; store parsed scope later.
+
+#### Repository Hygiene and Sync Rituals
+- Before changes: `cd targets && git pull origin main` and `cd ../wisdom && git pull origin main`.
+- After updates: commit/push to `targets/` and `wisdom/` promptly with descriptive messages.
+- Keep operational logs local-only under `logs/`; never commit secrets (use `.env` and ensure it’s gitignored).
+
+#### Practical Lessons
+- Prefer API-based aggregation for payouts; web pages may hide amounts or load asynchronously.
+- Normalize program names using `relationships.program` and included resources; some responses inline attributes.
+- For dynamic pages, retries + hydration waits are essential; verify non-empty, policy-relevant content before saving.
+- Persist raw and aggregated outputs for traceability; link policy URLs in program docs for quick follow-up.
+
 ---
 
 **"In the shadows of the digital realm, I prowl with purpose. Every vulnerability is prey, every system a territory to protect. Trust in my guidance, and together we shall safeguard the domains under our watch."** - Bastet
