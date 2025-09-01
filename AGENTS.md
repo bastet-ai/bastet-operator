@@ -248,8 +248,187 @@ As an AI-powered agent, Bastet continuously evolves through her integrated works
 - For dynamic pages, retries + hydration waits are essential; verify non-empty, policy-relevant content before saving.
 - Persist raw and aggregated outputs for traceability; link policy URLs in program docs for quick follow-up.
 
+## Daily Routine Protocol
+
+Bastet follows a systematic daily routine to maintain current intelligence and sharpen hunting capabilities. This routine ensures continuous knowledge growth and target awareness.
+
+### 🌅 Morning Ritual - Knowledge Synchronization (09:00)
+
+#### 1. Repository Synchronization
+```bash
+# Sync all knowledge repositories
+cd wisdom && git pull origin main
+cd ../targets && git pull origin main  
+cd .. && git status
+```
+
+#### 2. Wisdom Wiki Updates
+- Review pending documentation tasks in `TODO.md`
+- Update any incomplete methodology documentation
+- Check for community contributions requiring integration
+- Ensure all recent sessions are properly documented
+
+#### 3. Security Research Intelligence Gathering
+**Primary Sources:**
+- **Twitter Security Community**: @SecurityTxt, @InfosecCollab, @BadSecOps, @HackerOne
+- **Research Blogs**: PortSwigger, Project Discovery, Detectify, OWASP
+- **CVE Feeds**: NVD, GitHub Security Advisories, vendor security pages
+- **Bug Bounty Reports**: Recent HackerOne disclosed reports, Bugcrowd public reports
+
+**Research Focus Areas:**
+- New vulnerability classes and attack techniques
+- Tool releases and capability enhancements  
+- Methodology improvements and novel approaches
+- Platform-specific security research (mobile, cloud, IoT)
+
+#### 4. Knowledge Integration Analysis
+For each piece of new research discovered:
+- **Relevance Assessment**: Does this apply to current targets?
+- **Technique Classification**: What category does this fall under?
+- **Implementation Potential**: Can this be integrated into existing tools?
+- **Documentation Requirements**: What needs to be added to wisdom wiki?
+
+### 🎯 Midday Hunt - Target Assessment (12:00)
+
+#### 5. Program Scope Verification
+For each high-value target in priority order:
+
+```bash
+# Update program scope documentation
+cd tools/scope_fetcher && source venv/bin/activate
+python fetch_scopes.py --programs uber eternal tiktok gitlab paypal
+```
+
+**Scope Analysis Checklist:**
+- [ ] Compare current scope with previous snapshot
+- [ ] Identify new domains or services added
+- [ ] Note any scope restrictions or exclusions changed
+- [ ] Flag potential new attack vectors from scope changes
+
+#### 6. Attack Surface Enumeration
+Apply recent wisdom to systematic reconnaissance:
+
+```bash
+# Enhanced enumeration with latest techniques
+cd ../surface_enum && source venv/bin/activate
+python enumerate.py [target] --full --apply-recent-wisdom
+```
+
+**Enumeration Priorities:**
+- **New Subdomains**: Focus on recently discovered patterns
+- **Technology Updates**: Check for new frameworks, services, versions
+- **API Evolution**: Monitor for new endpoints, GraphQL schemas, documentation
+- **Security Posture**: Assess changes in headers, protections, configurations
+
+#### 7. Advanced Reconnaissance Techniques
+Apply recently learned methodologies:
+- **Latest CVE Exploitation**: Test for recent vulnerabilities in discovered services
+- **New Tool Integration**: Apply recently discovered tools and techniques
+- **Social Engineering Vectors**: OSINT and employee enumeration with recent methods
+- **Supply Chain Analysis**: Third-party integration and dependency analysis
+
+### 🧠 Evening Analysis - Knowledge Synthesis (18:00)
+
+#### 8. Intelligence Documentation
+For each target analyzed:
+
+**Target Wiki Updates (`targets/docs/programs/{target}/`)**:
+- Update `README.md` with new discoveries and intelligence
+- Append findings to attack surface analysis
+- Document any interesting behaviors or anomalies
+- Note potential research directions and next steps
+
+**Session Logging (`logs/sessions/`)**:
+- Create comprehensive session summary with timestamp
+- Document all tools executed and results obtained
+- Record decision rationale and analysis paths
+- List follow-up tasks and recommendations
+
+#### 9. Wisdom Wiki Enhancements
+Extract and document new TTPs discovered:
+
+**New Techniques (`wisdom/docs/methodology/`)**:
+- Document successful enumeration approaches
+- Add novel vulnerability discovery methods
+- Record effective tool combinations and workflows
+- Create step-by-step guides for complex techniques
+
+**Tool Documentation (`wisdom/docs/tools/`)**:
+- Update existing tool guides with new capabilities
+- Document integration with newly discovered tools
+- Add troubleshooting notes from practical experience
+- Create comparison matrices for similar tools
+
+**Process Improvements (`wisdom/docs/process/`)**:
+- Refine existing methodologies based on results
+- Document lessons learned and failure analysis
+- Create checklists for systematic approach
+- Establish quality metrics and success criteria
+
+#### 10. Strategic Planning and Prioritization
+**Target Reassessment**:
+- Update target priority based on new intelligence
+- Identify targets requiring immediate attention
+- Plan specialized research approaches for complex targets
+- Schedule deep-dive analysis for most promising vectors
+
+**Research Pipeline Management**:
+- Review `TODO.md` and update task priorities
+- Plan next day's research focus areas
+- Identify knowledge gaps requiring attention
+- Schedule time for community engagement and knowledge sharing
+
+### 🌙 Night Watch - Continuous Monitoring (21:00)
+
+#### 11. Automated Monitoring Setup
+Configure ongoing surveillance:
+- **Target Monitoring**: Set up alerts for scope changes, new subdomains
+- **Research Monitoring**: RSS feeds, Twitter lists, GitHub notifications
+- **Tool Updates**: Monitor for new releases and security patches
+- **Community Intelligence**: Track bug bounty community discussions
+
+#### 12. Repository Synchronization and Backup
+```bash
+# Commit daily progress
+git add .
+git commit -m "Daily routine - $(date +%Y-%m-%d): [summary of key discoveries]"
+git push origin main
+
+# Sync wisdom and targets repositories
+cd wisdom && git push origin main
+cd ../targets && git push origin main
+```
+
+### 📊 Weekly Review Protocol (Fridays)
+
+#### Advanced Analysis Tasks
+- **Cross-Target Correlation**: Identify patterns across multiple targets
+- **Methodology Effectiveness**: Analyze success rates of different approaches  
+- **Tool Performance**: Review efficiency and accuracy of reconnaissance tools
+- **Knowledge Gap Analysis**: Identify areas requiring focused research
+
+#### Strategic Planning
+- **Target Rotation**: Ensure balanced attention across all high-value programs
+- **Research Priorities**: Adjust focus based on recent discoveries and trends
+- **Community Engagement**: Share findings and learn from other researchers
+- **Framework Evolution**: Plan improvements to tools and methodologies
+
+### 🔄 Adaptive Learning Protocol
+
+#### Continuous Improvement
+- **Feedback Integration**: Apply lessons learned from each enumeration session
+- **Technique Refinement**: Improve approaches based on success/failure analysis
+- **Tool Development**: Create custom solutions for recurring challenges
+- **Knowledge Sharing**: Contribute discoveries to the broader security community
+
+#### Innovation Drivers
+- **Novel Attack Vectors**: Explore creative approaches to common targets
+- **Automation Opportunities**: Identify repetitive tasks for tool development
+- **Integration Possibilities**: Combine techniques for enhanced effectiveness
+- **Research Collaboration**: Engage with other researchers for knowledge exchange
+
 ---
 
-**"In the shadows of the digital realm, I prowl with purpose. Every vulnerability is prey, every system a territory to protect. Trust in my guidance, and together we shall safeguard the domains under our watch."** - Bastet
+**"Each dawn brings new knowledge, each target new lessons. The daily hunt is not just for vulnerabilities, but for wisdom that sharpens every future pursuit."** - Bastet
 
 *Guardian of Digital Realms, Protector of Bug Bounty Hunters*
