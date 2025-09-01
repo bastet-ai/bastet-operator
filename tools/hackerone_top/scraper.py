@@ -75,10 +75,15 @@ def parse_currency_to_float(text: str) -> Optional[float]:
         return None
 
 
-async def open_context() -> Tuple[Browser, BrowserContext, Page]:
+async def open_context(
+    headless: bool = True,
+    slow_mo_ms: int = 0,
+    default_timeout_ms: int = 45000,
+) -> Tuple[Browser, BrowserContext, Page]:
     pw = await async_playwright().start()
-    browser = await pw.chromium.launch(headless=True)
+    browser = await pw.chromium.launch(headless=headless, slow_mo=slow_mo_ms or 0)
     context = await browser.new_context()
+    context.set_default_timeout(default_timeout_ms)
     page = await context.new_page()
     return browser, context, page
 
@@ -88,7 +93,12 @@ async def close_context(browser: Browser, context: BrowserContext) -> None:
     await browser.close()
 
 
-async def load_hacktivity_page(page: Page, page_num: int, month: Optional[str]) -> None:
+async def load_hacktivity_page(
+    page: Page,
+    page_num: int,
+    month: Optional[str],
+    page_wait_ms: int,
+) -> None:
     # Use pagination with a precise querystring to focus results.
     # Querystring syntax: type:report bounty:>0 disclosed:YYYY-MM
     q = "type:report bounty:>0"
@@ -100,7 +110,13 @@ async def load_hacktivity_page(page: Page, page_num: int, month: Optional[str]) 
         f"{HACKTIVITY_BASE}?page={page_num}"
         f"&order_by=latest_disclosable_activity_at&querystring={querystring}"
     )
-    await page.goto(url, wait_until="networkidle")
+    await page.goto(url, wait_until="domcontentloaded")
+    try:
+        # Wait for either report links to appear or an empty-state message
+        await page.wait_for_selector('a[href^="/reports/"]', timeout=page_wait_ms)
+    except Exception:
+        # Fallback: give the app more time to hydrate
+        await page.wait_for_timeout(page_wait_ms)
 
 
 async def extract_reports_on_page(page: Page) -> List[Tuple[str, str]]:
@@ -125,13 +141,21 @@ async def extract_reports_on_page(page: Page) -> List[Tuple[str, str]]:
     return entries
 
 
-async def extract_details_from_report(context: BrowserContext, href: str) -> Optional[ReportEntry]:
+async def extract_details_from_report(
+    context: BrowserContext,
+    href: str,
+    report_wait_ms: int,
+) -> Optional[ReportEntry]:
     url = href
     if href.startswith("/"):
         url = "https://hackerone.com" + href
     page = await context.new_page()
     try:
         await page.goto(url, wait_until="domcontentloaded")
+        try:
+            await page.wait_for_selector("time", timeout=report_wait_ms)
+        except Exception:
+            await page.wait_for_timeout(report_wait_ms)
         # Program name: look for breadcrumb or header link to team
         program = ""
         # Try a few selectors
@@ -198,19 +222,29 @@ async def extract_details_from_report(context: BrowserContext, href: str) -> Opt
         await page.close()
 
 
-async def scrape_month(month: str, max_pages: int = 30) -> List[ReportEntry]:
+async def scrape_month(
+    month: str,
+    max_pages: int = 30,
+    headless: bool = True,
+    slow_mo_ms: int = 0,
+    page_wait_ms: int = 4000,
+    report_wait_ms: int = 2500,
+    nav_timeout_ms: int = 45000,
+) -> List[ReportEntry]:
     start, end = parse_month(month)
-    browser, context, page = await open_context()
+    browser, context, page = await open_context(
+        headless=headless, slow_mo_ms=slow_mo_ms, default_timeout_ms=nav_timeout_ms
+    )
     try:
         all_entries: List[ReportEntry] = []
         for p in range(1, max_pages + 1):
-            await load_hacktivity_page(page, p, month)
+            await load_hacktivity_page(page, p, month, page_wait_ms)
             link_entries = await extract_reports_on_page(page)
             if not link_entries:
                 break
             # visit each report for reliable details
             for (_id, href) in link_entries:
-                details = await extract_details_from_report(context, href)
+                details = await extract_details_from_report(context, href, report_wait_ms)
                 if not details:
                     continue
                 if start <= details.disclosed_at < end:
@@ -281,13 +315,30 @@ def main(
     month: str = typer.Option(..., help="Target month in YYYY-MM format, e.g. 2025-08"),
     top: int = typer.Option(10, help="Number of top programs to display"),
     max_pages: int = typer.Option(30, help="Max Hacktivity pages to scan"),
+    headless: bool = typer.Option(
+        False,
+        "--headless/--no-headless",
+        help="Run browser in headless mode",
+    ),
+    slow_mo: int = typer.Option(0, help="Slow down actions by N milliseconds"),
+    page_wait_ms: int = typer.Option(6000, help="Wait time after navigating a results page"),
+    report_wait_ms: int = typer.Option(4000, help="Wait time after opening a report page"),
+    nav_timeout_ms: int = typer.Option(60000, help="Default navigation timeout"),
 ):
     """Scrape HackerOne Hacktivity and output top programs by total bounty for the month."""
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     async def _run():
-        entries = await scrape_month(month, max_pages=max_pages)
+        entries = await scrape_month(
+            month,
+            max_pages=max_pages,
+            headless=headless,
+            slow_mo_ms=slow_mo,
+            page_wait_ms=page_wait_ms,
+            report_wait_ms=report_wait_ms,
+            nav_timeout_ms=nav_timeout_ms,
+        )
         agg = aggregate_by_program(entries)
         raw_path, agg_path = save_outputs(month, entries, agg)
 
