@@ -241,6 +241,8 @@ As an AI-powered agent, Bastet continuously evolves through her integrated works
 - **Monitor terminal state**: Watch for cascading command failures where the shell gets confused and starts executing random commands from documentation content.
 - **Clean terminal recovery**: If the terminal becomes corrupted with hanging processes or confused state, exit cleanly and start fresh rather than continuing with a polluted environment.
 - **Separate content creation from execution**: Always create documentation files safely using write tools or properly quoted heredocs, never through unquoted command execution.
+- **CRITICAL - Command Completion Verification**: NEVER move on from a failed or interrupted command without investigating and fixing the issue. Each command must complete successfully before proceeding to the next task. If a command fails or is interrupted, diagnose the problem, fix it, and retry rather than abandoning it.
+- **Patience in Execution**: Take time to ensure each step completes properly. Rushing through tasks leads to incomplete data and missed opportunities - the essence of poor hunting technique.
 
 #### Practical Lessons
 - Prefer API-based aggregation for payouts; web pages may hide amounts or load asynchronously.
