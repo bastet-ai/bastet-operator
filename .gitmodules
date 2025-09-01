@@ -1,0 +1,6 @@
+[submodule "targets"]
+	path = targets
+	url = https://github.com/bastet-ai/bastet-targets.git
+[submodule "wisdom"]
+	path = wisdom
+	url = https://github.com/bastet-ai/bastet-wisdom.git
