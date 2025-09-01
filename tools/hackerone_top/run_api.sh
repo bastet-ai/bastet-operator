@@ -15,6 +15,14 @@ pip install requests pandas typer >/dev/null
 
 MONTH="${1:-2025-08}"
 
+# Load environment from project .env if present
+if [ -f "$ROOT_DIR/.env" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ROOT_DIR/.env"
+  set +a
+fi
+
 if [ -z "${H1_USERNAME:-}" ] || [ -z "${H1_API_TOKEN:-}" ]; then
   echo "Missing H1_USERNAME or H1_API_TOKEN in environment" >&2
   exit 1

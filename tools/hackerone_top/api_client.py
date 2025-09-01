@@ -68,8 +68,13 @@ def build_filter(month: str) -> str:
     # ISO dates without timezone in filter; API interprets UTC
     s = start.strftime("%Y-%m-%d")
     e = end.strftime("%Y-%m-%d")
-    # total_awarded_amount present and > 0
-    return f"disclosed_at:[{s} TO {e}) total_awarded_amount:>0"
+    # Focus on bounty awards that happened within the month
+    # and ensure an amount is present
+    return (
+        f"latest_disclosable_action:Activities::BountyAwarded "
+        f"latest_disclosable_activity_at:[{s} TO {e}) "
+        f"total_awarded_amount:>0"
+    )
 
 
 def get_auth_header(username: str, token: str) -> Dict[str, str]:
@@ -85,36 +90,95 @@ def fetch_hacktivity(month: str, username: str, token: str, per_page: int = 100,
     }
     q = build_filter(month)
     items: List[HacktivityItem] = []
-    cursor: Optional[str] = None
+    next_url: Optional[str] = None
 
-    for _ in range(max_pages):
-        params = {
-            "querystring": q,
-            "page[size]": per_page,
+    def build_param_variants(query: str, cursor_token: Optional[str]) -> List[Dict[str, str]]:
+        base = {
+            "page[size]": str(per_page),
+            "include": "program,award",
+            "fields[program]": "name,handle",
         }
-        if cursor:
-            params["page[cursor]"] = cursor
-        resp = requests.get(API_URL, headers=headers, params=params, timeout=30)
+        if cursor_token:
+            base["page[cursor]"] = cursor_token
+        variants = []
+        for key in ("querystring", "filter[query]", "query", "filter[q]"):
+            p = dict(base)
+            p[key] = query
+            variants.append(p)
+        return variants
+
+    for page_index in range(max_pages):
+        # Build request
+        if next_url:
+            resp = requests.get(next_url, headers=headers, timeout=30)
+        else:
+            params_list = build_param_variants(q, None)
+            # try param variants until one returns data or 200
+            last_exc = None
+            resp = None
+            for params in params_list:
+                try:
+                    resp = requests.get(API_URL, headers=headers, params=params, timeout=30)
+                    if resp.status_code == 200:
+                        break
+                except Exception as e:  # noqa: BLE001
+                    last_exc = e
+            if resp is None:
+                if last_exc:
+                    raise last_exc
+                raise RuntimeError("Failed to fetch hacktivity")
         resp.raise_for_status()
         data = resp.json()
+        # Save first page debug for troubleshooting
+        if page_index == 0:
+            tool_outputs, _ = ensure_logs_dirs()
+            debug_path = tool_outputs / f"h1_api_debug_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.json"
+            try:
+                with debug_path.open("w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2)
+            except Exception:
+                pass
         # Extract items
         for node in data.get("data", []):
             attrs = node.get("attributes", {})
             relationships = node.get("relationships", {})
-            team = relationships.get("team", {}).get("data", {})
-            program = team.get("attributes", {}).get("name") if team else None
+            program = None
+            included_by_id = {inc.get("id"): inc for inc in data.get("included", [])}
+            # Prefer inline program attributes when present
+            inline_prog = relationships.get("program", {}).get("data", {})
+            if inline_prog:
+                program = inline_prog.get("attributes", {}).get("name") or inline_prog.get("attributes", {}).get("handle")
             if not program:
-                # Some responses include team details in included
-                included_by_id = {inc.get("id"): inc for inc in data.get("included", [])}
-                if team and team.get("id") in included_by_id:
-                    inc = included_by_id[team.get("id")]
-                    program = inc.get("attributes", {}).get("name")
+                prog_link = relationships.get("program", {}).get("data")
+                if prog_link and prog_link.get("id") in included_by_id:
+                    inc = included_by_id.get(prog_link.get("id"))
+                    if inc:
+                        program = inc.get("attributes", {}).get("name") or inc.get("attributes", {}).get("handle")
 
-            total_awarded = attrs.get("total_awarded_amount") or 0
-            disclosed_at = attrs.get("disclosed_at")
-            if not disclosed_at:
+            # Award amount field can vary; try multiple keys
+            total_awarded = (
+                attrs.get("total_awarded_amount")
+                or attrs.get("total_awarded_amount_in_usd")
+                or attrs.get("awarded_amount")
+                or attrs.get("bounty_amount")
+            )
+            if not total_awarded:
+                # Try to resolve via included award object
+                award_link = relationships.get("award", {}).get("data")
+                if award_link:
+                    inc_award = included_by_id.get(award_link.get("id"))
+                    if inc_award:
+                        aattrs = inc_award.get("attributes", {})
+                        total_awarded = (
+                            aattrs.get("amount_in_usd")
+                            or aattrs.get("amount")
+                        )
+            total_awarded = float(total_awarded or 0.0)
+            # Determine award activity time for month filtering
+            lda = attrs.get("latest_disclosable_activity_at")
+            if not lda:
                 continue
-            dt = datetime.fromisoformat(str(disclosed_at).replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(str(lda).replace("Z", "+00:00"))
 
             items.append(
                 HacktivityItem(
@@ -126,12 +190,97 @@ def fetch_hacktivity(month: str, username: str, token: str, per_page: int = 100,
             )
 
         # Pagination
-        cursor = data.get("links", {}).get("next", {}).get("href")
+        next_link = data.get("links", {}).get("next")
+        cursor = None
+        if isinstance(next_link, str):
+            cursor = next_link
+        elif isinstance(next_link, dict):
+            cursor = next_link.get("href")
         if not cursor:
             break
         # Cursor may be a full URL; extract page[cursor] if present
-        if "page[cursor]=" in cursor:
+        if isinstance(cursor, str) and "page[cursor]=" in cursor:
             cursor = cursor.split("page[cursor]=", 1)[1]
+
+    return items
+
+
+def fetch_hacktivity_unfiltered(month: str, username: str, token: str, per_page: int = 100, max_pages: int = 200) -> List[HacktivityItem]:
+    """Fallback: fetch recent hacktivity without server-side filters and filter locally.
+
+    Stops when items are older than month start to avoid excessive paging.
+    """
+    start, end = parse_month(month)
+    headers = {
+        **get_auth_header(username, token),
+        "Accept": "application/json",
+        "User-Agent": "Bastet-Operator/1.0",
+    }
+    items: List[HacktivityItem] = []
+    cursor: Optional[str] = None
+
+    for _ in range(max_pages):
+        params = {
+            "page[size]": per_page,
+            "include": "team",
+            "fields[team]": "name",
+        }
+        if cursor:
+            params["page[cursor]"] = cursor
+        resp = requests.get(API_URL, headers=headers, params=params, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+
+        included_by_id = {inc.get("id"): inc for inc in data.get("included", [])}
+        page_items: List[HacktivityItem] = []
+        for node in data.get("data", []):
+            attrs = node.get("attributes", {})
+            relationships = node.get("relationships", {})
+            team_link = relationships.get("team", {}).get("data", {})
+            program = None
+            if team_link:
+                inc = included_by_id.get(team_link.get("id"))
+                if inc:
+                    program = inc.get("attributes", {}).get("name")
+
+            total_awarded = (
+                attrs.get("total_awarded_amount")
+                or attrs.get("total_awarded_amount_in_usd")
+                or attrs.get("awarded_amount")
+                or attrs.get("bounty_amount")
+                or 0
+            )
+            disclosed_at = attrs.get("disclosed_at")
+            if not disclosed_at:
+                continue
+            dt = datetime.fromisoformat(str(disclosed_at).replace("Z", "+00:00"))
+
+            item = HacktivityItem(
+                id=node.get("id", ""),
+                program=program or "Unknown Program",
+                total_awarded_amount=float(total_awarded or 0.0),
+                disclosed_at=dt,
+            )
+            page_items.append(item)
+
+        # local filter
+        month_items = [it for it in page_items if start <= it.disclosed_at < end and (it.total_awarded_amount or 0) > 0]
+        items.extend(month_items)
+
+        # Stop if the last page item is older than month start
+        if page_items and all(it.disclosed_at < start for it in page_items):
+            break
+
+        # Pagination
+        next_link = data.get("links", {}).get("next")
+        href = None
+        if isinstance(next_link, str):
+            href = next_link
+        elif isinstance(next_link, dict):
+            href = next_link.get("href")
+        if not href:
+            break
+        next_url = href
 
     return items
 
@@ -204,6 +353,9 @@ def main(
         raise typer.Exit("Missing credentials: set H1_USERNAME and H1_API_TOKEN env vars.")
 
     items = fetch_hacktivity(month, username, token, per_page=per_page, max_pages=max_pages)
+    if not items:
+        # Fallback path if server-side filters returned nothing
+        items = fetch_hacktivity_unfiltered(month, username, token, per_page=per_page, max_pages=max_pages)
     agg = aggregate_by_program(items)
     raw_path, agg_path = save_outputs(month, items, agg)
     typer.echo(f"Saved raw items to: {raw_path}")

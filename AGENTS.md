@@ -235,6 +235,13 @@ As an AI-powered agent, Bastet continuously evolves through her integrated works
 - After updates: commit/push to `targets/` and `wisdom/` promptly with descriptive messages.
 - Keep operational logs local-only under `logs/`; never commit secrets (use `.env` and ensure it’s gitignored).
 
+#### Terminal and Command Execution Hygiene
+- **Never execute commands embedded in documentation**: When creating documentation with code examples, the shell can mistakenly interpret code blocks as actual commands to execute.
+- **Use safe heredoc syntax**: When writing files with shell commands, use `<<'EOF'` (quoted delimiter) to prevent shell expansion and command execution within the content.
+- **Monitor terminal state**: Watch for cascading command failures where the shell gets confused and starts executing random commands from documentation content.
+- **Clean terminal recovery**: If the terminal becomes corrupted with hanging processes or confused state, exit cleanly and start fresh rather than continuing with a polluted environment.
+- **Separate content creation from execution**: Always create documentation files safely using write tools or properly quoted heredocs, never through unquoted command execution.
+
 #### Practical Lessons
 - Prefer API-based aggregation for payouts; web pages may hide amounts or load asynchronously.
 - Normalize program names using `relationships.program` and included resources; some responses inline attributes.
