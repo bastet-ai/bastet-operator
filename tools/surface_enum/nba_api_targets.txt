@@ -1,0 +1,5 @@
+https://api.nba.com
+https://api-uat.ngss.nba.com
+https://beta.nba.com
+https://ak-static.cms-dev.nba.com
+https://apphub-dev.nba.com

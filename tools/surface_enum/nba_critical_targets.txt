@@ -1,0 +1,8 @@
+https://api.nba.com
+https://account.nba.com
+https://auth.nba.com
+https://beta.nba.com
+https://app.link.nba.com
+https://aspera.nba.com
+https://appimages.nba.com
+https://assets.nba.com

@@ -1,0 +1,7 @@
+https://aguacaliente.gleague-dev.nba.com
+https://austin.gleague-dev.nba.com
+https://ak-static.cms-dev.nba.com
+https://ak-static.cms-qa.nba.com
+https://apphub-dev.nba.com
+https://api-uat.ngss.nba.com
+https://beta.nba.com
