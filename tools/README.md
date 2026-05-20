@@ -43,7 +43,7 @@ pip install -r requirements.txt
 ### Integration with Bastet Ecosystem
 - **Input**: Target lists from `../targets/` wiki
 - **Output**: Findings logged to `../logs/` directory
-- **Documentation**: Process updates to `../wisdom/` wiki
+- **Documentation**: Process updates to `../skillz/` wiki
 - **Coordination**: Session summaries stored in `../logs/sessions/`
 
 ## Output Management

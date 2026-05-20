@@ -173,7 +173,7 @@ python enumerate.py target.com --timeout 30
 - **Target Input**: Domain lists from `../targets/` wiki
 - **Output Logging**: Results stored in `../../logs/surface_enum/`
 - **Intelligence Updates**: Findings integrated into target documentation
-- **Methodology Sharing**: Successful techniques documented in `../wisdom/`
+- **Methodology Sharing**: Successful techniques documented in `../skillz/`
 
 ---
 

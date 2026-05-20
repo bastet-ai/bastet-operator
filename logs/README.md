@@ -153,8 +153,8 @@ git check-ignore logs/
 
 ## Integration with Bastet Components
 
-### Wisdom Integration
-- Successful methodologies are extracted and documented in `wisdom/`
+### Skillz Integration
+- Successful methodologies are extracted and documented in `skillz/`
 - Personal insights remain in `logs/` while general knowledge is shared
 
 ### Target Integration
@@ -195,7 +195,7 @@ bastet-operator report --tool-performance --monthly
 
 ### Synchronization Issues
 - Logs are local-only and don't sync
-- Session summaries may reference wisdom/target updates
+- Session summaries may reference skillz/target updates
 - Use manual sync commands for repositories
 
 ---

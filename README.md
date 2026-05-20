@@ -11,7 +11,7 @@ Bastet Operator is an intelligent automation tool designed to streamline and enh
 Bastet Operator operates from four main directories:
 
 - **`targets/`** - MkDocs wiki containing target lists and interesting observations within scope ([bastet-targets](https://github.com/bastet-ai/bastet-targets/))
-- **`wisdom/`** - Knowledge base where Bastet records learnings from security scanning tools ([bastet-wisdom](https://github.com/bastet-ai/bastet-wisdom))
+- **`skillz/`** - Knowledge base where Bastet records learnings from security scanning tools ([skillz-wiki](https://github.com/bastet-ai/skillz-wiki))
 - **`tools/`** - Custom Python tools for data interaction and analysis
 - **`logs/`** - Tool output, session summaries, and operational data (gitignored, local only)
 
@@ -51,7 +51,7 @@ cd bastet-operator
 
 # Clone the remote wikis
 git clone https://github.com/bastet-ai/bastet-targets.git targets
-git clone https://github.com/bastet-ai/bastet-wisdom.git wisdom
+git clone https://github.com/bastet-ai/skillz-wiki.git skillz
 
 # Create local directories
 mkdir -p tools logs
@@ -137,7 +137,7 @@ targets:
 Bastet Operator enhances your bug bounty process through its integrated directory system:
 
 1. **Target Management** (`targets/`) - Document and track bug bounty targets with detailed scope observations
-2. **Knowledge Building** (`wisdom/`) - Accumulate security testing methodologies and tool learnings  
+2. **Knowledge Building** (`skillz/`) - Accumulate security testing methodologies and tool learnings  
 3. **Tool Development** (`tools/`) - Create and maintain custom Python tools for specific testing needs
 4. **Session Tracking** (`logs/`) - Record all tool output, findings, and interactive session summaries
 5. **Continuous Learning** - Sync knowledge and targets across the distributed Bastet ecosystem
@@ -146,7 +146,7 @@ Bastet Operator enhances your bug bounty process through its integrated director
 
 - **Interactive Sessions**: All conversations and findings are automatically summarized in `logs/`
 - **Target Documentation**: Interesting observations are recorded in the `targets/` wiki
-- **Methodology Refinement**: Successful techniques are documented in the `wisdom/` knowledge base
+- **Methodology Refinement**: Successful techniques are documented in the `skillz/` knowledge base
 - **Tool Evolution**: Custom scripts and utilities are versioned in `tools/`
 
 ## Contributing
