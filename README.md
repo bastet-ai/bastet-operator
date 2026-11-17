@@ -185,7 +185,9 @@ Bastet Operator is designed with security as a priority:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Original Bastet project code and documentation are licensed under the [Apache License 2.0](LICENSE). Third-party dependencies, container images, submodules, imported program data, and other third-party materials retain their respective licenses and notices; they are not relicensed by this grant.
+
+Earlier MIT grants remain valid; this update does not revoke them.
 
 ## Support
 
